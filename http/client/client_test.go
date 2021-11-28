@@ -14,21 +14,6 @@ import (
 	"time"
 )
 
-func TestDefault(t *testing.T) {
-	client := New(nil)
-	if client.config != defaultConfig {
-		t.Errorf("Default configuration doesn't match")
-	}
-}
-
-func TestEmptyConfig(t *testing.T) {
-	client := New(&Config{EnableHTTP2: true})
-
-	if *client.config != *defaultConfig {
-		t.Errorf("Default fields doesn't match expected (%v): got (%v)", *defaultConfig, *client.config)
-	}
-}
-
 func TestMethods(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
@@ -48,7 +33,7 @@ func TestMethods(t *testing.T) {
 		{"POST", "content", "CONTENT=text/plain METHOD=POST CONTENT=content"},
 	} {
 		t.Run(fmt.Sprintf("METHOD: %s", test.method), func(t *testing.T) {
-			client := New(nil)
+			client := New()
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
@@ -107,7 +92,7 @@ func TestDeadlineContext(t *testing.T) {
 
 	defer ts.Close()
 
-	client := New(nil)
+	client := New()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Millisecond)
 
 	defer cancel()
@@ -149,13 +134,13 @@ func TestTLSClient(t *testing.T) {
 	certpool := x509.NewCertPool()
 	certpool.AddCert(cert)
 
-	config := &Config{
-		TLSConfig: &tls.Config{
+	tlsOption := WithTLSConfig(
+		&tls.Config{
 			RootCAs: certpool,
 		},
-	}
+	)
 
-	client := New(config)
+	client := New(tlsOption)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

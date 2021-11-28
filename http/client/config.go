@@ -6,7 +6,7 @@ import (
 )
 
 // Config represents the necessary configuration for a HTTP client.
-type Config struct {
+type config struct {
 	// MaxIdleConns controls maximum of idle connections using keep-alive.
 	MaxIdleConns int
 
@@ -32,41 +32,24 @@ type Config struct {
 	EnableHTTP2 bool
 }
 
-// defaultConfig is the default configuration used for the HTTP client
-var defaultConfig = &Config{
-	MaxIdleConns:          100,
-	Timeout:               30 * time.Second,
-	KeepAlive:             30 * time.Second,
-	IdleConnTimeout:       90 * time.Second,
-	TLSHandshakeTimeout:   10 * time.Second,
-	ExpectContinueTimeout: 1 * time.Second,
-	EnableHTTP2:           true,
-}
+// Default configurations used for the HTTP client
+const (
+	maxIdleConns          = 100
+	timeout               = 30 * time.Second
+	keepAlive             = 30 * time.Second
+	idleConnTimeout       = 90 * time.Second
+	tlsHandshakeTimeout   = 10 * time.Second
+	expectContinueTimeout = 1 * time.Second
+)
 
 // setDefaults adds missing configuration past by the caller by using defaultConfig
-func setDefaults(config *Config) {
-
-	if config.MaxIdleConns == 0 {
-		config.MaxIdleConns = defaultConfig.MaxIdleConns
-	}
-
-	if config.Timeout == 0 {
-		config.Timeout = defaultConfig.Timeout
-	}
-
-	if config.KeepAlive == 0 {
-		config.KeepAlive = defaultConfig.KeepAlive
-	}
-
-	if config.IdleConnTimeout == 0 {
-		config.IdleConnTimeout = defaultConfig.IdleConnTimeout
-	}
-
-	if config.TLSHandshakeTimeout == 0 {
-		config.TLSHandshakeTimeout = defaultConfig.TLSHandshakeTimeout
-	}
-
-	if config.ExpectContinueTimeout == 0 {
-		config.ExpectContinueTimeout = defaultConfig.ExpectContinueTimeout
+func setDefaults() *config {
+	return &config{
+		MaxIdleConns:          maxIdleConns,
+		Timeout:               timeout,
+		KeepAlive:             keepAlive,
+		IdleConnTimeout:       idleConnTimeout,
+		TLSHandshakeTimeout:   tlsHandshakeTimeout,
+		ExpectContinueTimeout: expectContinueTimeout,
 	}
 }

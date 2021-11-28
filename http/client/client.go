@@ -10,7 +10,7 @@ import (
 // A Client represents HTTP client to send request to server.
 type Client struct {
 	// config specifies configuration for Client.
-	config *Config
+	config *config
 
 	// client specifies an instance of http.Client.
 	client *http.Client
@@ -42,32 +42,31 @@ func (c *Client) Post(ctx context.Context, url, contentType string, body io.Read
 
 // New returns a new instances of Client. It sets the necessary defaults if configuration is nil.
 // It will also set any missing fields with defaults variables.
-func New(config *Config) *Client {
+func New(opts ...Option) *Client {
+	c := setDefaults()
 
-	if config == nil {
-		config = defaultConfig
+	for _, opt := range opts {
+		opt(c)
 	}
-
-	setDefaults(config)
 
 	transport := &http.Transport{
 		Dial: (&net.Dialer{
-			Timeout:   config.Timeout,
-			KeepAlive: config.KeepAlive,
+			Timeout:   c.Timeout,
+			KeepAlive: c.KeepAlive,
 			DualStack: true,
 		}).Dial,
-		ForceAttemptHTTP2:   config.EnableHTTP2,
-		MaxIdleConns:        config.MaxIdleConns,
-		IdleConnTimeout:     config.IdleConnTimeout,
-		TLSHandshakeTimeout: config.TLSHandshakeTimeout,
+		ForceAttemptHTTP2:   c.EnableHTTP2,
+		MaxIdleConns:        c.MaxIdleConns,
+		IdleConnTimeout:     c.IdleConnTimeout,
+		TLSHandshakeTimeout: c.TLSHandshakeTimeout,
 	}
 
-	if config.TLSConfig != nil {
-		transport.TLSClientConfig = config.TLSConfig
+	if c.TLSConfig != nil {
+		transport.TLSClientConfig = c.TLSConfig
 	}
 
 	return &Client{
-		config: config,
+		config: c,
 		client: &http.Client{
 			Transport: transport,
 		},
