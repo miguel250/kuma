@@ -2,6 +2,7 @@ package client
 
 import (
 	"crypto/tls"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -85,5 +86,24 @@ func TestWithEnableHTTP2(t *testing.T) {
 
 	if c.EnableHTTP2 != value {
 		t.Errorf("failed to enable HTTP 2 want ('%v'), got ('%v')", value, c.EnableHTTP2)
+	}
+}
+
+func TestWithDefaultHeader(t *testing.T) {
+	var (
+		c       config
+		headers = []Header{
+			{"key1", "value1"},
+			{"key2", "value2"},
+		}
+	)
+
+	for _, header := range headers {
+		opt := WithDefaultHeader(header.Key, header.Value)
+		opt(&c)
+	}
+
+	if !reflect.DeepEqual(headers, c.DefaultHeaders) {
+		t.Fatalf("DefaultHeaders don't match got ('%v'), got ('%v')", headers, c.DefaultHeaders)
 	}
 }

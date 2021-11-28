@@ -30,6 +30,9 @@ type config struct {
 
 	//EnableHTTP2 controls whether to use HTTP2
 	EnableHTTP2 bool
+
+	// DefaultHeaders specifies headers to be used by default for all requests
+	DefaultHeaders []Header
 }
 
 // Default configurations used for the HTTP client

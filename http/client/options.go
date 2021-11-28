@@ -62,3 +62,10 @@ func WithEnableHTTP2(b bool) Option {
 		c.EnableHTTP2 = b
 	}
 }
+
+// WithDefaultHeader specifies header to be used by default for all requests. This function can be called multiple times.
+func WithDefaultHeader(key, value string) Option {
+	return func(c *config) {
+		c.DefaultHeaders = append(c.DefaultHeaders, WithHeader(key, value))
+	}
+}

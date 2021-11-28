@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -13,6 +14,57 @@ import (
 	"testing"
 	"time"
 )
+
+func TestDefaultHeaders(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		bodyb, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("ReadAll on req.Body: %v", err)
+		}
+
+		buf := bytes.NewBufferString("")
+		headers := r.Header.Clone()
+		err = headers.WriteSubset(buf, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		fmt.Fprintf(w, "HEADERS='%s' METHOD=%s CONTENT=%s",
+			buf.String(),
+			r.Method,
+			string(bodyb),
+		)
+	}))
+
+	defer ts.Close()
+
+	client := New(
+		WithDefaultHeader("key1", "value1"),
+		WithDefaultHeader("key2", "value2"),
+		WithDefaultHeader("key3", "value3"),
+	)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	resp, err := client.Get(ctx, ts.URL)
+
+	if err != nil {
+		t.Fatalf("Failed to make request with (%v)", err)
+	}
+
+	defer resp.Body.Close()
+
+	bodyb, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("ReadAll on req.Body: %v", err)
+	}
+
+	expected := "HEADERS='Accept-Encoding: gzip\r\nKey1: value1\r\nKey2: value2\r\nKey3: value3\r\nUser-Agent: Go-http-client/1.1\r\n' METHOD=GET CONTENT="
+	if g := string(bodyb); g != expected {
+		t.Errorf("got %q, want %q", g, expected)
+	}
+}
 
 func TestMethods(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +109,8 @@ func TestMethods(t *testing.T) {
 				}
 			case "POST":
 				b := strings.NewReader(test.payload)
-				resp, err := client.Post(ctx, ts.URL, "text/plain", b)
+				contentTypeHeader := WithHeader("Content-Type", "text/plain")
+				resp, err := client.Post(ctx, ts.URL, b, contentTypeHeader)
 
 				if err != nil {
 					t.Fatalf("Failed to make request with (%v)", err)
